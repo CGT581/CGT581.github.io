@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+svg {
+  font: 10px sans-serif;
+}
+
+.background path {
+  fill: none;
+  stroke: #ddd;
+  shape-rendering: crispEdges;
+}
+
+.foreground path {
+  fill: none;
+  stroke: steelblue;
+}
+
+.brush .extent {
+  fill-opacity: .3;
+  stroke: #fff;
+  shape-rendering: crispEdges;
+}
+
+.axis line,
+.axis path {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+  text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+  cursor: move;
+}
+
+</style>
+<body>
+<script src="d3.js"></script>
+<script src="myvar.js"></script>
+<script>
+
+var margin = {top: 30, right: 10, bottom: 10, left: 10},
+    width = 960 - margin.left - margin.right,
+    height = 12500 - margin.top - margin.bottom;
+
+var x = d3.scale.ordinal().rangePoints([0, width], 1),
+    y = {},
+    dragging = {};
+
+var line = d3.svg.line(),
+    axis = d3.svg.axis().orient("left"),
+    background,
+    foreground;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+d3.csv("mydata2.csv", function(error, cars) {
+
+  // Extract the list of dimensions and create a scale for each.
+  // x.domain returns max and min valuses and the range for the x axis.
+  //what's the "dimensions" here for?
+  // .keys returns an array containing the property names of the specified object, basically just the list title of that data
+  
+  // dimensions = d3.keys(cars[0]).filter(function(d) {
+  //   return d != "name" && (y[d] = d3.scale.linear()
+  //      // .extent Returns the minimum and maximum value in the given array using natural order. This is equivalent to calling d3.min and d3.max simultaneously.
+  //       .domain(d3.extent(cars, function(p) { return + p[d]; }))
+  //       .range([height, 0]));
+  // })
+
+  // y['OccupationsGroup'] = d3.scale.linear().domain(occupationsGroupArr).range([height,0]);
+  //d3.scale.ordinal()    .rangeRoundBands([0, width], .1);
+  y['OccupationsGroup'] = d3.scale.ordinal().domain(occupationsGroupArr).rangeRoundBands([0,height],0.01);
+  y['DetailGroup'] = d3.scale.ordinal().domain(detailGroupArr).rangeRoundBands([0,height],0.1);
+  y['Wages'] = d3.scale.linear().domain([18000,190000]).range([height,0]);
+  dimensions = ['OccupationsGroup','DetailGroup','Wages'];
+  x.domain(dimensions);
+
+  // Add grey background lines for context.
+  //what's .attr("d". path) for?
+  background = svg.append("g")
+      .attr("class", "background")
+      .selectAll("path")
+      .data(cars)
+      .enter()
+      .append("path")
+      .attr("d", path);
+
+  // Add blue foreground lines for focus.
+  foreground = svg.append("g")
+      .attr("class", "foreground")
+      .selectAll("path")
+      .data(cars)
+      .enter()
+      .append("path")
+      .attr("d", path);
+
+  // Add a group element for each dimension.
+  var g = svg.selectAll(".dimension")
+      .data(dimensions)
+      .enter()
+      .append("g")
+      .attr("class", "dimension")
+      .attr("transform", function(d) { return "translate(" + x(d) + ")"; });  //x(d)???
+
+  // Add an axis and title.
+  // MUST HAVE
+  g.append("g")
+      .attr("class", "axis")
+      .each(function(d) { d3.select(this).call(axis.scale(y[d])); })
+      .append("text")
+      .style("text-anchor", "middle")
+      .attr("y", -9) //?
+      .text(function(d) { return d; });
+
+  // Add and store a brush for each axis.
+  g.append("g")
+      .attr("class", "brush")
+      .each(function(d) {
+        d3.select(this).call(y[d].brush = d3.svg.brush().y(y[d]).on("brushstart", brushstart).on("brush", brush));
+      })
+    .selectAll("rect")
+      .attr("x", -8)
+      .attr("width", 16);
+});
+
+function position(d) {
+  var v = dragging[d];
+  return v == null ? x(d) : v;
+}
+
+function transition(g) {
+  return g.transition().duration(500);
+}
+
+// Returns the path for a given data point.
+function path(d) {
+  return line(
+    dimensions.map(
+      function(p) { 
+        var ret = [position(p), y[p](d[p])]; 
+        return ret;
+      }));
+}
+
+function brushstart() {
+  d3.event.sourceEvent.stopPropagation();
+}
+
+// Handles a brush event, toggling the display of foreground lines.
+function brush() {
+  var actives = dimensions.filter(function(p) { return !y[p].brush.empty(); }),
+      extents = actives.map(function(p) { return y[p].brush.extent(); });
+  foreground.style("display", function(d) {
+    return actives.every(function(p, i) {
+      return extents[i][0] <= d[p] && d[p] <= extents[i][1];
+    }) ? null : "none";
+  });
+}
+
+</script>
