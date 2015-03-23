@@ -1,0 +1,125 @@
+<!doctype html>
+<html>
+<head>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="jquery.csv-0.71.js"></script>
+<script src="http://code.jquery.com/jquery-1.8.2.js"></script>
+<script src="http://code.jquery.com/ui/1.9.0/jquery-ui.js"></script>
+<script src="http://jquery-csv.googlecode.com/git/src/jquery.csv.js"></script>
+
+
+<meta charset="utf-8">
+<title>JSON convertor</title>
+</head>
+
+<body>
+
+
+<p id="demo"></p>
+<p id="demo2"></p>
+
+<script>
+
+//occupational_group row 0-22
+//detailed_occupation row 23-836
+d3.csv("occupational_group.csv", function(loadedRows) {
+  occupational_group = loadedRows;
+  //doSomethingWithRows();
+  var occupational_group;
+	var json_text = "";
+	var parent_code = "";
+	var children_code = "";
+	
+   //document.getElementById("demo2").innerHTML = ""+occupational_group;
+   //document.getElementById("demo2").innerHTML = ""+occupational_group.length;
+   
+   //start total
+   json_text += '{"Title": "' + occupational_group[0].title +'" ,';
+   json_text += '"Code": "' + occupational_group[0].code +'" ,';
+   json_text += '"median_annual_wage_2012": ' + occupational_group[0].median_annual_wage_2012 +' ,';
+   //note
+	//json_text += '<br/>';
+	
+   json_text += '"less_than_high_school_diploma": ' + occupational_group[0].Less_than_high_school_diploma +' ,';
+   json_text += '"High school diploma or equivalent": ' + occupational_group[0].High_school_diploma_or_equivalent +' ,';
+   json_text += '"Some_college_or_no_degree": ' + occupational_group[0].Some_college_or_no_degree +' ,';
+   json_text += '"Associates_degree": ' + occupational_group[0].Associates_degree +' ,';
+   json_text += '"Bachelors_degree": ' + occupational_group[0].Bachelors_degree +' ,';
+   json_text += '"Masters_degree": ' + occupational_group[0].Masters_degree +' ,';
+   json_text += '"Doctoral_or_professional_degree": ' + occupational_group[0].Doctoral_or_professional_degree +' ,';
+   json_text += '"children": [' ;
+   //note
+	//json_text += '<br\><br\>';
+   
+   //for occupational_group
+   for( startlv1 = true, i=1 ; i<=22 ; i++)
+   {
+	   //note
+		//json_text += '----------';
+		
+		if(startlv1 === false)
+		{
+			json_text += ",";
+		}
+		startlv1 = false;
+	   json_text += '{"Title": "' + occupational_group[i].title +'" ,';
+	   json_text += '"Code": "' + occupational_group[i].code +'" ,';
+	   json_text += '"median_annual_wage_2012": ' + occupational_group[i].median_annual_wage_2012 +' ,';
+	   json_text += '"children": [ ' ;
+	   parent_code =  String(occupational_group[i].code).slice(0,2); 
+	   
+	 
+	   //note
+	   //json_text += 'parent_code '+ parent_code+ ' <br/><br/>';
+	   //json_text += '<br/><br/>';
+	   
+	   //for detailed_occupation
+	   for( startlv2 = true , j=23 ; j<=836 ; j++)
+	   {
+		   
+		   children_code = String(occupational_group[j].code).slice(0,2); 
+		   //json_text += 'children_code '+ children_code+ ' <br/>';
+		  if (parent_code == children_code)
+	   		{
+				//note
+				//json_text += '--------------------';
+			
+				if(startlv2 === false)
+				{
+					json_text += ",";
+				}
+				startlv2 = false;
+				json_text += '{"Title": "' + occupational_group[j].title +'" ,';
+			   json_text += '"Code": "' + occupational_group[j].code +'" ,';
+			   json_text += '"median_annual_wage_2012": ' + occupational_group[j].median_annual_wage_2012 +' ,';
+			   //note
+				//json_text += '<br/>';
+				json_text += '"children": [ {' ;
+			   json_text += '"less_than_high_school_diploma": ' + occupational_group[j].Less_than_high_school_diploma +'} ,';
+			   json_text += '{"High school diploma or equivalent": ' + occupational_group[j].High_school_diploma_or_equivalent +' },';
+			   json_text += '{"Some_college_or_no_degree": ' + occupational_group[j].Some_college_or_no_degree +' },';
+			   json_text += '{"Associates_degree": ' + occupational_group[j].Associates_degree +'} ,';
+			   json_text += '{"Bachelors_degree": ' + occupational_group[j].Bachelors_degree +' },';
+			   json_text += '{"Masters_degree": ' + occupational_group[j].Masters_degree +' },';
+			   json_text += '{"Doctoral_or_professional_degree": ' + occupational_group[j].Doctoral_or_professional_degree +'}]}';
+			   
+			//note
+	   		//json_text += '<br/>';
+			
+			}
+		}
+	   json_text += '] }';
+	   //note
+	   //json_text += '<br/><br/><br/>';
+	   
+	}
+	
+	//end total
+	json_text += ']}';
+	document.getElementById("demo").innerHTML = json_text;
+});
+
+</script> 
+
+</body>
+</html>

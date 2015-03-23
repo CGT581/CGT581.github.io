@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  margin: auto;
+  margin-top: 20px;
+  position: relative;
+  width: 960px;
+  text-align: center;
+}
+
+form {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+}
+
+path {
+  stroke: #fff;
+  fill-rule: evenodd;
+}
+
+.d3-tip {
+  line-height: 1;
+  font-weight: normal;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border-radius: 2px;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.6);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+  visibility: hidden;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+
+.mid div {
+	width: 600px;
+	height: 200px;
+	margin-left: 350px;
+	margin-top: 0px;
+	font-size:12px;
+  background: rgba(1, 1, 1, 0.0);
+  position: absolute;
+  alignment-adjust:central;
+  color: black;
+  z-index: 10;
+  text-align: center;
+}
+
+</style>
+<body>
+
+<form action="SunburstWage.html">
+  <label><input type="radio" name="colormode" value="seperate" checked> Occupational Group</label>
+  <label><input type="radio" name="colormode" value="code" > Annual Wage</label>
+</form>
+<form style=" visibility: hidden" >
+  <label><input type="radio" name="mode" value="size" checked> Size</label>
+  <label><input type="radio" name="mode" value="count" > Count</label>
+</form>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+<script>
+
+var width = 800,
+    height = 500,
+    radius = Math.min(width, height) / 2;
+
+var x = d3.scale.linear()
+    .range([0, 2 * Math.PI]);
+
+var y = d3.scale.sqrt()
+    .range([0, radius]);
+
+var color = d3.scale.category20c();
+var colorc = d3.scale.linear()
+    .domain([-10,-5,0,5, 10])
+    .range(["hsl(269,68%,54%)","hsl(216,68%,54%)", "hsl(180,68%,54%)", "hsl(122,68%,54%)", "hsl(59,68%,54%)"]);
+
+//note
+var tip = d3.tip()
+  .attr('class', 'd3-tip')
+  .offset([0, -25])
+  .html(function(d) {
+	  if(d.depth < 3)
+    		return  d.Title + '</br>$'+ d.median_annual_wage_2012;
+		else 
+			{
+				a = d3.entries(d);
+				console.log(d);
+				return a[0].key + '</br>'+ a[0].value + "%";
+			}
+  })
+  
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+  .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + (height / 2 + 10) + ")")
+	.call(tip);
+	
+d3.select(".mid")
+  .selectAll("div")
+  .data("Mid text")
+  .enter().append("div");
+
+var partition = d3.layout.partition()
+    .sort(null)
+    .value(function(d) { return 1; })
+	;
+
+var arc = d3.svg.arc()
+    .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x))); })
+    .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); })
+    .innerRadius(function(d) { return Math.max(0, y(d.y)); })
+    .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); });
+
+// Keep track of the node that is currently being displayed as the root.
+var node;
+	
+//note
+d3.json("occupation.json", function(error, root) {
+	if (error) return console.warn(error);
+  node = root;
+  
+
+	 //document.getElementById("mid").innerHTML = node.Title;
+  var path = svg.datum(root).selectAll("path")
+      .data(partition.nodes)
+    .enter().append("path")
+      .attr("d", arc)
+	  
+	  .style("fill", function(d) { if(d.depth == 0)	 return "white"; 
+	  									else return color((d.children ? d : d.parent).Code.slice(0,5));
+										 })
+      .on("mousedown", click)
+	  /*.on("mouseover", mouseOverArc)
+      .on("mousemove", mouseMoveArc)
+      .on("mouseout", mouseOutArc)*/
+	  //.on("mousemove",format_description(d))
+	  .on('mouseover', tip.show)
+      .on('mouseout', tip.hide)
+	  .on('click',function(d){
+		  text = "<b>Educational attainment by detailed occupation, 2010-11</b><br/>";
+		  if(d.depth < 3)
+		  {
+			  text += "Occupation: " + d.Title + "<br/> Median Annual Wage: $" + d.median_annual_wage_2012;
+			}
+			else
+			{
+				a = d3.entries(d);
+				console.log(d);
+				for(i=0; i<7; i++)
+				{
+					a[i].key + ': '+ a[i].value + "%</br>";
+				}
+			}
+		  document.getElementById("mid").innerHTML = text;
+		  })
+	  .each(stash);
+	  
+  d3.selectAll("input").on("change", function change() { window.location.assign("SunburstWage.html")
+    
+  });
+
+  /*d3.selectAll("input").on("change", function change() {
+    var value = d.median_annual_wage_2012; 
+
+    path
+        .data(partition.value(value).nodes)
+      .transition()
+        .duration(1000)
+        .attrTween("d", arcTweenData);
+  });*/
+
+  function click(d) {
+    node = d;
+    path.transition()
+      .duration(1000)
+      .attrTween("d", arcTweenZoom(d));
+  }
+});
+
+d3.select(self.frameElement).style("height", height + "px");
+
+// Setup for switching data: stash the old values for transition.
+function stash(d) {
+  d.x0 = d.x;
+  d.dx0 = d.dx;
+}
+
+// When switching data: interpolate the arcs in data space.
+function arcTweenData(a, i) {
+  var oi = d3.interpolate({x: a.x0, dx: a.dx0}, a);
+  function tween(t) {
+    var b = oi(t);
+    a.x0 = b.x;
+    a.dx0 = b.dx;
+    return arc(b);
+  }
+  if (i == 0) {
+   // If we are on the first arc, adjust the x domain to match the root node
+   // at the current zoom level. (We only need to do this once.)
+    var xd = d3.interpolate(x.domain(), [node.x, node.x + node.dx]);
+    return function(t) {
+      x.domain(xd(t));
+      return tween(t);
+    };
+  } else {
+    return tween;
+  }
+}
+
+// When zooming: interpolate the scales.
+function arcTweenZoom(d) {
+  var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
+      yd = d3.interpolate(y.domain(), [d.y, 1]),
+      yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
+  return function(d, i) {
+    return i
+        ? function(t) { return arc(d); }
+        : function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); return arc(d); };
+  };
+}
+
+
+//note
+function mouseOverArc(d) {
+			 d3.select(this).attr("stroke","black")
+			 
+          tooltip.html(format_description(d));
+          return tooltip.transition()
+            .duration(50)
+            .style("opacity", 0.9);
+        }
+
+function mouseOutArc(d){
+	d3.select(this).attr("stroke","")
+	return tooltip.style("opacity", 0);
+}
+
+function mouseMoveArc (d) {
+          return tooltip
+            .style("top", (d3.event.pageY-10)+"px")
+            .style("left", (d3.event.pageX+10)+"px");
+}
+
+function format_description(d) {
+		document.getElementById("mid").innerHTML = d.Title;
+      return  '<b>' + d.Title + '</b></br>$'+ d.median_annual_wage_2012;
+}
+function rec_children(d)
+ {
+	if (d.children== null) 
+		return (d.Less_than_high_school_diploma + d.High_school_diploma_or_equivalent + d.Some_college_or_no_degree + d.Associates_degree + d.Bachelors_degree + d.Masters_degree + d.Doctoral_or_professional_degree)/7.0;
+	else 
+	{
+		var avg = 0.0;
+		for (ch in d.children)
+		{
+				avg += rec_children(ch);
+		}
+		return avg/d.children.length;
+	}
+}
+</script>
+<div class="mid" id="mid">
+	<b>Educational attainment by detailed occupation, 2010-11</b>
+</div>
+</body>
