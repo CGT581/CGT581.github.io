@@ -76,8 +76,8 @@ d3.csv("mydata2.csv", function(error, cars) {
 
   // y['OccupationsGroup'] = d3.scale.linear().domain(occupationsGroupArr).range([height,0]);
   //d3.scale.ordinal()    .rangeRoundBands([0, width], .1);
-  y['OccupationsGroup'] = d3.scale.ordinal().domain(occupationsGroupArr).rangeRoundBands([0,height],0.01);
-  y['DetailGroup'] = d3.scale.ordinal().domain(detailGroupArr).rangeRoundBands([0,height],0.1);
+  y['OccupationsGroup'] = d3.scale.ordinal().domain(occupationsGroupArr).rangeRoundBands([0,height],1);
+  y['DetailGroup'] = d3.scale.ordinal().domain(detailGroupArr).rangeRoundBands([0,height],1);
   y['Wages'] = d3.scale.linear().domain([18000,190000]).range([height,0]);
   dimensions = ['OccupationsGroup','DetailGroup','Wages'];
   x.domain(dimensions);
