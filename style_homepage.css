@@ -1,7 +1,6 @@
 body {
 	text-decoration: none;
 	text-align: center;
-	background-color: #f9f9f9;
 	font-family: Proxima Nova;
 }
 
@@ -10,19 +9,18 @@ body {
 }
 
 #maincontent {
-	background-color: #f9f9f9;
 	border: 2px solid #d1d1d1;
 	border-radius: 3px;
-	padding: 10px 10px;
-	margin: 5% 5%;
+	padding: 20px 20px;
+	margin: 7% 7%;
 }
 
 div #header {
-	font-size: 50px;
+	font-size: 45px;
 	font-weight: bold;
 	text-align: center;
 	line-height: 1.6em;
-	margin-top: 30px;
+	margin-top: 70px;
 }
 a {
 	color: black;
@@ -44,7 +42,7 @@ a:hover {
 	font-family: Abel;
 	letter-spacing: 1px;
 	display: inline-block;
-	margin: 5px 117px 20px 117px;
+	margin: 35px 99px 35px 99px;
 	
 	color: #c1c1c1;
 	font-size: 18px;
@@ -52,15 +50,35 @@ a:hover {
 
 .nav {
 	display: inline-block;
-	margin: 30px 40px;
+	margin: 25px 41px;
 }
 
 .line {
 	display: inline-block;
 	background-color: #c1c1c1;
-	width: 150px;
+	width: 130px;
 	height: 2px;
 	z-index: 10;
 	margin: 4px -10px;
 	font-size: 18px;
 }
+
+/*.pic{
+	width:1025px;
+	background: url(sunburst_homepic.jpg) no-repeat;
+}
+.text{
+	width:1025px;
+	background:#FFF;
+	opacity:0;
+}
+.pic:hover .text
+{
+	opacity:0.6;
+	text-align:justify;
+	color:#000000;
+	font-size:20px;
+	font-weight:700;
+	font-family:"Times New Roman", Times, serif;
+	padding:30px;
+}*/
