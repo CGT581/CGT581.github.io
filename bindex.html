@@ -35,15 +35,47 @@ svg {
   cursor: move;
 }
 
+
+.d3-tip {
+  line-height: 1;
+  font-weight: normal;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border-radius: 2px;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.6);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+  visibility: hidden;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+
 </style>
 <body>
 <script src="d3.js"></script>
 <script src="myvar.js"></script>
+<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
 <script>
 
-var margin = {top: 30, right: 10, bottom: 10, left: 10},
-    width = 960 - margin.left - margin.right,
-    height = 12500 - margin.top - margin.bottom;
+var margin = {top: 30, right: 80, bottom: 10, left: 150},
+    width = 1500 - margin.left - margin.right,
+    height = 900 - margin.top - margin.bottom;
 
 var x = d3.scale.ordinal().rangePoints([0, width], 1),
     y = {},
@@ -84,7 +116,7 @@ d3.csv("mydata2.csv", function(error, cars) {
 
   // Add grey background lines for context.
   //what's .attr("d". path) for?
-  background = svg.append("g")
+ var background = svg.append("g")
       .attr("class", "background")
       .selectAll("path")
       .data(cars)
@@ -93,7 +125,7 @@ d3.csv("mydata2.csv", function(error, cars) {
       .attr("d", path);
 
   // Add blue foreground lines for focus.
-  foreground = svg.append("g")
+ var foreground = svg.append("g")
       .attr("class", "foreground")
       .selectAll("path")
       .data(cars)
@@ -107,17 +139,35 @@ d3.csv("mydata2.csv", function(error, cars) {
       .enter()
       .append("g")
       .attr("class", "dimension")
-      .attr("transform", function(d) { return "translate(" + x(d) + ")"; });  //x(d)???
+	.attr("transform", function(d) { return "translate(" + x(d) + ")"; });  //x(d)??? 
+	 
 
   // Add an axis and title.
   // MUST HAVE
   g.append("g")
       .attr("class", "axis")
-      .each(function(d) { d3.select(this).call(axis.scale(y[d])); })
+      .each(function(d) { 
+	  						if(d=="Wages")
+	  						{
+								d3.select(this).call(axis.orient("right"));
+								d3.select(this).call(axis.scale(y[d]));
+							}  
+							else if(d=="OccupationsGroup")
+	  						{
+								d3.select(this).call(axis.scale(y[d]));
+							}  
+							else
+							{
+								console.log(""+y[d]);
+								d3.select(this).call(axis.scale(y[d]));
+								d3.select(this).selectAll("text").remove();
+							}
+		})
       .append("text")
       .style("text-anchor", "middle")
       .attr("y", -9) //?
-      .text(function(d) { return d; });
+      .text(function(d) { return d;  });
+	  
 
   // Add and store a brush for each axis.
   g.append("g")
@@ -164,4 +214,12 @@ function brush() {
   });
 }
 
+function mouseOverArc(d) {
+			 d3.select(this).attr("stroke","black")
+			 
+          tooltip.html(format_description(d));
+          return tooltip.transition()
+            .duration(50)
+            .style("opacity", 0.9);
+        }
 </script>
