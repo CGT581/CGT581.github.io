@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<meta charset="utf-8">
+
+<style>
+
+
+
+body {
+
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  position: relative;
+
+  width: 1200px;
+
+  height:800px;
+
+  margin-left:20px;
+
+}
+
+
+
+.axis text {
+
+  font: 10px sans-serif;
+
+}
+
+
+
+.axis path,
+
+.axis line {
+
+  fill: none;
+
+  stroke: #000;
+
+  shape-rendering: crispEdges;
+
+}
+
+
+
+.bar {
+
+  fill: steelblue;
+
+  fill-opacity: .9;
+
+}
+
+.bar:hover{
+
+	fill: brown;
+
+}
+
+
+
+.x.axis path {
+
+  display: none;
+
+}
+
+
+
+label {
+
+  position: absolute;
+
+  top: 10px;
+
+  right: 5px;
+
+}
+
+
+
+</style>
+
+<h1>Median Annual Wages by Occupation in 2012</h1>
+
+<label><input type="checkbox"> Sort values</label>
+
+
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+
+<script>
+
+
+
+var margin = {top: 20, right: 20, bottom: 80, left: 40},
+
+    width = 1200 - margin.left - margin.right,
+
+    height = 500 - margin.top - margin.bottom;
+
+
+
+
+
+var x = d3.scale.ordinal()
+
+    .rangeRoundBands([0, width],0.1,0.1);
+
+
+
+var y = d3.scale.linear()
+
+    .range([height, 0]);
+
+
+
+var xAxis = d3.svg.axis()
+
+    .scale(x)
+
+    .orient("bottom");
+
+
+
+var yAxis = d3.svg.axis()
+
+    .scale(y)
+
+    .orient("left")
+
+
+
+var svg = d3.select("body").append("svg")
+
+    .attr("width", width + margin.left + margin.right)
+
+    .attr("height", height + margin.top + margin.bottom)
+
+  .append("g")
+
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+
+d3.csv("data_sort.csv", function(error, data) {
+
+
+
+  data.forEach(function(d) {
+
+    d.wage = +d.wage;
+
+  });
+
+
+
+  x.domain(data.map(function(d) { return d.title; }));
+
+  y.domain([0, d3.max(data, function(d) { return d.wage; })]);
+
+
+
+  svg.append("g")
+
+      .attr("class", "x axis")
+
+      .attr("transform", "translate(0," + height + ")")
+
+	  .attr("dx", ".80em")
+
+	  .text("Occupation")
+
+	  .call(xAxis)
+
+	  .selectAll(".tick text")
+
+      .call(wrap, x.rangeBand());
+
+
+
+  svg.append("g")
+
+      .attr("class", "y axis")
+
+      .call(yAxis)
+
+    .append("text")
+
+      .attr("y", 2)
+
+      .attr("dy", ".80em")
+
+      .style("text-anchor", "end")
+
+      .text("Wage($)");
+
+
+
+  svg.selectAll(".bar")
+
+      .data(data)
+
+    .enter().append("rect")
+
+      .attr("class", "bar")
+
+      .attr("x", function(d) { return x(d.title); })
+
+      .attr("width", x.rangeBand())
+
+      .attr("y", function(d) { return y(d.wage); })
+
+      .attr("height", function(d) { return height - y(d.wage); });
+
+
+
+  d3.select("input").on("change", change);
+
+
+
+  var sortTimeout = setTimeout(function() {
+
+    d3.select("input").property("checked", true).each(change);
+
+  }, 2000);
+
+
+
+  function change() {
+
+    clearTimeout(sortTimeout);
+
+
+
+    // Copy-on-write since tweens are evaluated after a delay.
+
+    var x0 = x.domain(data.sort(this.checked
+
+        ? function(a, b) { return b.wage - a.wage; }
+
+        : function(a, b) { return d3.ascending(a.title, b.title); })
+
+        .map(function(d) { return d.title; }))
+
+        .copy();
+
+
+
+    svg.selectAll(".bar")
+
+        .sort(function(a, b) { return x0(a.title) - x0(b.title); });
+
+
+
+    var transition = svg.transition().duration(750),
+
+        delay = function(d, i) { return i * 50; };
+
+
+
+    transition.selectAll(".bar")
+
+        .delay(delay)
+
+        .attr("x", function(d) { return x0(d.title); });
+
+
+
+    transition.select(".x.axis")
+
+	  .call(xAxis)
+
+	  .selectAll(".tick text")
+
+      .call(wrap, x.rangeBand())
+
+      .selectAll("g")
+
+        .delay(delay);
+
+  }
+
+});
+
+function wrap(text, width) {
+
+  text.each(function() {
+
+    var text = d3.select(this),
+
+        words = text.text().split(/\s+/).reverse(),
+
+        word,
+
+        line = [],
+
+        lineNumber = 0,
+
+        lineHeight = 1.1, // ems
+
+        y = text.attr("y"),
+
+        dy = parseFloat(text.attr("dy")),
+
+        tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+
+    while (word = words.pop()) {
+
+      line.push(word);
+
+      tspan.text(line.join(" "));
+
+      if (tspan.node().getComputedTextLength() > width) {
+
+        line.pop();
+
+        tspan.text(line.join(" "));
+
+        line = [word];
+
+        tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+
+      }
+
+    }
+
+  });
+
+}
+
+</script>
+
