@@ -43,6 +43,8 @@ svg {
   background: rgba(0, 0, 0, 0.6);
   color: #fff;
   border-radius: 2px;
+  text-align: center;
+  font: 14px sans-serif;
 }
 
 /* Creates a small triangle extender for the tooltip */
@@ -77,6 +79,14 @@ var margin = {top: 30, right: 80, bottom: 10, left: 150},
     width = 1500 - margin.left - margin.right,
     height = 900 - margin.top - margin.bottom;
 
+var color = d3.scale.category20c();
+
+var tip = d3.tip()
+  .attr('class', 'd3-tip')
+  .offset([0, -25])
+  //.attr("transform", "translate(" + d3.mouse(this)[0] + "," + d3.mouse(this)[1] + ")")
+  .html(function(d) { return d.DetailGroup + '</br>$'+ d.Wages;});
+
 var x = d3.scale.ordinal().rangePoints([0, width], 1),
     y = {},
     dragging = {};
@@ -90,7 +100,8 @@ var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+	.call(tip);
 
 d3.csv("mydata2.csv", function(error, cars) {
 
@@ -122,7 +133,8 @@ d3.csv("mydata2.csv", function(error, cars) {
       .data(cars)
       .enter()
       .append("path")
-      .attr("d", path);
+      .attr("d", path)
+	  ;
 
   // Add blue foreground lines for focus.
  var foreground = svg.append("g")
@@ -131,7 +143,13 @@ d3.csv("mydata2.csv", function(error, cars) {
       .data(cars)
       .enter()
       .append("path")
-      .attr("d", path);
+      .attr("d", path)
+	  .style("stroke", function(d) { return color(d.OccupationsGroup);})
+	  .on('mouseover', function(d){ d3.select(this).attr("stroke","black").attr("stroke-width","8").style("cursor","pointer")})
+      .on('mouseout', function(d){ d3.select(this).attr("stroke","steelblue").attr("stroke-width","").style("cursor","default")})
+	  .on('mousedown',tip.show)
+	  .on('mouseup',tip.hide)
+	  ;
 
   // Add a group element for each dimension.
   var g = svg.selectAll(".dimension")
@@ -158,7 +176,6 @@ d3.csv("mydata2.csv", function(error, cars) {
 							}  
 							else
 							{
-								console.log(""+y[d]);
 								d3.select(this).call(axis.scale(y[d]));
 								d3.select(this).selectAll("text").remove();
 							}
@@ -178,6 +195,7 @@ d3.csv("mydata2.csv", function(error, cars) {
     .selectAll("rect")
       .attr("x", -8)
       .attr("width", 16);
+	 
 });
 
 function position(d) {
@@ -214,12 +232,16 @@ function brush() {
   });
 }
 
-function mouseOverArc(d) {
-			 d3.select(this).attr("stroke","black")
-			 
-          tooltip.html(format_description(d));
-          return tooltip.transition()
-            .duration(50)
-            .style("opacity", 0.9);
-        }
+function focusedPath(d)
+{
+	console.log("focus" +d);
+	d3.select(this).attr("stroke","black").attr("stroke-width","5");
+	return 0;
+}
+
+function defocusedPath(d)
+{
+	d3.select(this).attr("stroke","steelblue").attr("stroke-width","");
+	return 0;
+}
 </script>
